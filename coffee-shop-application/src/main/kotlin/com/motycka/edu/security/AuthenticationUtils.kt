@@ -1,5 +1,6 @@
 package com.motycka.edu.security
 
+import com.motycka.edu.customer.CustomerId
 import com.motycka.edu.error.UnauthorizedException
 import com.motycka.edu.user.UserId
 import com.motycka.edu.user.UserRole
@@ -14,10 +15,11 @@ fun PipelineContext<*, ApplicationCall>.getUserIdentity(): IdentityDTO {
 
     return if (jwt != null) {
         val userId = jwt.getClaim(Claims.USER_ID, UserId::class)
+        val customerId = jwt.getClaim(Claims.CUSTOMER_ID, CustomerId::class)
         val role = jwt.getClaim(Claims.ROLE, String::class)
         IdentityDTO(
             userId = requireNotNull(userId) { "UserId claim is missing in JWT" },
-            customerId = requireNotNull(userId) { "CustomerId claim is missing in JWT" },
+            customerId = requireNotNull(customerId) { "CustomerId claim is missing in JWT" },
             role = requireNotNull(role) { "Role claim is missing in JWT" }.let { UserRole.valueOf(it) }
         )
     } else {

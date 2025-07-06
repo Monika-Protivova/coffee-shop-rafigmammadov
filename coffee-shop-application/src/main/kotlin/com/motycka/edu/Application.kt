@@ -8,6 +8,10 @@ import com.motycka.edu.customer.InternalCustomerService
 import com.motycka.edu.menu.MenuRepositoryImpl
 import com.motycka.edu.menu.MenuService
 import com.motycka.edu.menu.menuRoutes
+import com.motycka.edu.order.OrderRepositoryImpl
+import com.motycka.edu.order.OrderItemRepositoryImpl
+import com.motycka.edu.order.OrderService
+import com.motycka.edu.order.orderRoutes
 import com.motycka.edu.security.AuthenticationService
 import com.motycka.edu.security.JwtService
 import com.motycka.edu.security.loginRoutes
@@ -24,51 +28,66 @@ import kotlinx.serialization.json.Json
 
 private val logger = KotlinLogging.logger {}
 
-const val API_PATH = "/api"
+const val API_PATH = "/api/v1"
+
+fun Application.module() {
+    logger.info { "Starting application with configuration" }
+
+    // Configure the database
+    configureDatabases()
+
+    val menuRepository = MenuRepositoryImpl()
+    val menuService = MenuService(menuRepository = menuRepository)
+    val jwtGenerator = JwtService(config = this@module.environment.config)
+    val userRepository = UserRepositoryImpl()
+    val customerRepository = CustomerRepositoryImpl()
+    val authenticationService = AuthenticationService(
+        userRepository = userRepository,
+        internalCustomerService = InternalCustomerService(customerRepository = customerRepository),
+        jwtService = jwtGenerator
+    )
+    
+    val orderRepository = OrderRepositoryImpl()
+    val orderItemRepository = OrderItemRepositoryImpl()
+    val orderService = OrderService(
+        orderRepository = orderRepository,
+        orderItemRepository = orderItemRepository,
+        menuRepository = menuRepository,
+        customerRepository = customerRepository
+    )
+
+    install(ContentNegotiation) {
+        json(Json {
+            prettyPrint = true
+            isLenient = true
+        })
+    }
+
+    install(Authentication) {
+        configureJWT(this@module.environment.config)
+    }
+
+    routing {
+        loginRoutes(authenticationService, API_PATH)
+
+        authenticate(AUTH_JWT) {
+            menuRoutes(menuService, API_PATH)
+            orderRoutes(orderService, API_PATH)
+        }
+    }
+}
 
 fun main() {
-    // Create a simple embedded server with configuration from application.yaml
-    val applicationConfig = io.ktor.server.config.ApplicationConfig("application.yaml")
+    // Use the KTOR_CONFIG_FILE environment variable if set, otherwise use application.yaml
+    val configFile = System.getenv("KTOR_CONFIG_FILE") ?: "application.yaml"
+    
+    // Create a simple embedded server with configuration from the specified config file
+    val applicationConfig = io.ktor.server.config.ApplicationConfig(configFile)
     val ktorConfig = applicationConfig.config("ktor.deployment")
     val port = ktorConfig.property("port").getString().toInt()
     val host = ktorConfig.propertyOrNull("host")?.getString() ?: "0.0.0.0"
 
     embeddedServer(Netty, port = port, host = host) {
-        // Get the environment configuration
-
-        logger.info { "Starting application with configuration" }
-
-        // Configure the database
-        configureDatabases()
-
-        val menuRepository = MenuRepositoryImpl()
-        val menuService = MenuService(menuRepository = menuRepository)
-        val jwtGenerator = JwtService(config = applicationConfig)
-        val userRepository = UserRepositoryImpl()
-        val authenticationService = AuthenticationService(
-            userRepository = userRepository,
-            internalCustomerService = InternalCustomerService(customerRepository = CustomerRepositoryImpl()),
-            jwtService = jwtGenerator
-        )
-
-        install(ContentNegotiation) {
-            json(Json {
-                prettyPrint = true
-                isLenient = true
-            })
-        }
-
-        install(Authentication) {
-            configureJWT(applicationConfig)
-        }
-
-        routing {
-            loginRoutes(authenticationService, API_PATH)
-
-            authenticate(AUTH_JWT) {
-                menuRoutes(menuService, API_PATH)
-                // add order routes
-            }
-        }
+        module()
     }.start(wait = true)
 }

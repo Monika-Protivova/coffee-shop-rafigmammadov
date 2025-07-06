@@ -4,7 +4,5 @@ typealias OrderId = Long
 
 enum class OrderStatus {
     PENDING,
-    PAID,
-    COMPLETED,
-    CANCELLED
+    COMPLETED
 }

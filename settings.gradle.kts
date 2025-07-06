@@ -1,6 +1,6 @@
 rootProject.name = "backend-development-course"
 
-include("deprecated")
+// include("deprecated") // Comment out to prevent plugin conflicts
 include("coffee-shop-integration-tests")
 include("coffee-shop-application")
 
