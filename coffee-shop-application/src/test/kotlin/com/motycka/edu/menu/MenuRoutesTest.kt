@@ -69,7 +69,7 @@ class MenuRoutesTest : RoutesTestBase() {
             clearAllMocks()
         }
 
-        test("GET /api/menuitems should return all menu items") {
+        test("GET /api/v1/menuitems should return all menu items") {
             // Arrange
             val menuItems = setOf(
                 MenuItemResponse(id = 1, name = "Item 1", description = "Description 1", price = 10.99),
@@ -81,7 +81,7 @@ class MenuRoutesTest : RoutesTestBase() {
             testApplication {
                 configureTestApp()
 
-                val response = client.get("/api/menuitems") {
+                val response = client.get("$API_PATH/menuitems") {
                     header(HttpHeaders.Authorization, "Bearer $staffJwtToken")
                 }
 
@@ -94,7 +94,7 @@ class MenuRoutesTest : RoutesTestBase() {
             }
         }
 
-        test("POST /api/menuitems should create a new menu item") {
+        test("POST /api/v1/menuitems should create a new menu item") {
             val request = MenuItemRequest(
                 name = "New Item",
                 description = "New Description",
@@ -113,7 +113,7 @@ class MenuRoutesTest : RoutesTestBase() {
             testApplication {
                 configureTestApp()
 
-                val response = client.post("/api/menuitems") {
+                val response = client.post("$API_PATH/menuitems") {
                     contentType(ContentType.Application.Json)
                     header(HttpHeaders.Authorization, "Bearer $staffJwtToken")
                     setBody(Json.encodeToString(request))
@@ -129,7 +129,7 @@ class MenuRoutesTest : RoutesTestBase() {
             }
         }
 
-        test("PUT /api/menuitems/{id} should update an existing menu item") {
+        test("PUT /api/v1/menuitems/{id} should update an existing menu item") {
             val id = 1L
             val request = MenuItemRequest(
                 name = "Updated Item",
@@ -149,7 +149,7 @@ class MenuRoutesTest : RoutesTestBase() {
             testApplication {
                 configureTestApp()
 
-                val response = client.put("/api/menuitems/$id") {
+                val response = client.put("$API_PATH/menuitems/$id") {
                     contentType(ContentType.Application.Json)
                     header(HttpHeaders.Authorization, "Bearer $staffJwtToken")
                     setBody(Json.encodeToString(request))
@@ -164,7 +164,7 @@ class MenuRoutesTest : RoutesTestBase() {
             }
         }
 
-        test("PUT /api/menuitems/{id} should return 404 when menu item not found") {
+        test("PUT /api/v1/menuitems/{id} should return 404 when menu item not found") {
             // Arrange
             val id = 999L
             val request = MenuItemRequest(
@@ -178,7 +178,7 @@ class MenuRoutesTest : RoutesTestBase() {
             testApplication {
                 configureTestApp()
 
-                val response = client.put("/api/menuitems/$id") {
+                val response = client.put("$API_PATH/menuitems/$id") {
                     contentType(ContentType.Application.Json)
                     header(HttpHeaders.Authorization, "Bearer $staffJwtToken")
                     setBody(Json.encodeToString(request))
@@ -190,7 +190,7 @@ class MenuRoutesTest : RoutesTestBase() {
             }
         }
 
-        test("DELETE /api/menuitems/{id} should delete an existing menu item") {
+        test("DELETE /api/v1/menuitems/{id} should delete an existing menu item") {
             // Arrange
             val id = 1L
 
@@ -199,7 +199,7 @@ class MenuRoutesTest : RoutesTestBase() {
             testApplication {
                 configureTestApp()
 
-                val response = client.delete("/api/menuitems/$id") {
+                val response = client.delete("$API_PATH/menuitems/$id") {
                     header(HttpHeaders.Authorization, "Bearer $staffJwtToken")
                 }
 
@@ -209,7 +209,7 @@ class MenuRoutesTest : RoutesTestBase() {
             }
         }
 
-        test("DELETE /api/menuitems/{id} should return 404 when menu item not found") {
+        test("DELETE /api/v1/menuitems/{id} should return 404 when menu item not found") {
             // Arrange
             val id = 999L
 
@@ -218,7 +218,7 @@ class MenuRoutesTest : RoutesTestBase() {
             testApplication {
                 configureTestApp()
 
-                val response = client.delete("/api/menuitems/$id") {
+                val response = client.delete("$API_PATH/menuitems/$id") {
                     header(HttpHeaders.Authorization, "Bearer $staffJwtToken")
                 }
 

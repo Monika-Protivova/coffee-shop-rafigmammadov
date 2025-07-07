@@ -6,6 +6,7 @@ import io.kotest.matchers.nulls.shouldNotBeNull
 import io.kotest.matchers.shouldBe
 import io.ktor.client.call.*
 import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import io.ktor.http.*
 
 /**
@@ -27,19 +28,21 @@ class OrderIntegrationTest : IntegrationTestBase() {
         "GET /orders" - {
 
             "should return 200 OK and list of orders" {
-                runTest { client ->
+                runAuthenticatedTest { client ->
+                    println("baseUrl: $baseUrl")
                     client.get("$baseUrl/orders").apply {
                         status.value.shouldBe(200)
-                        with(body<List<OrderTestResponse>>()) {
-                            size.shouldBeGreaterThan(0)
-                            forEach(::validateOrderResponse)
-                        }
+                        val rawBody = bodyAsText()
+                        println("Raw response body: $rawBody")
+                        val orders = this.body<List<OrderTestResponse>>()
+                        orders.size.shouldBeGreaterThan(0)
+                        orders.forEach(::validateOrderResponse)
                     }
                 }
             }
 
             "should return 200 OK for valid ID" {
-                runTest { client ->
+                runAuthenticatedTest { client ->
                     client.get("$baseUrl/orders/1").apply {
                         status.value.shouldBe(200)
                         validateOrderResponse(body<OrderTestResponse>())
@@ -48,16 +51,14 @@ class OrderIntegrationTest : IntegrationTestBase() {
             }
 
             "should return 400 OK for invalid ID" {
-                runTest { client ->
-                    client.get("$baseUrl/orders/x")
-                        .status.value.shouldBe(400)
+                runAuthenticatedTest { client ->
+                    client.get("$baseUrl/orders/x").status.value.shouldBe(400)
                 }
             }
 
             "should return 404 Not Found for non-existing ID" {
-                runTest { client ->
-                    client.get("$baseUrl/orders/999")
-                        .status.value.shouldBe(404)
+                runAuthenticatedTest { client ->
+                    client.get("$baseUrl/orders/999").status.value.shouldBe(404)
                 }
             }
         }
@@ -66,7 +67,7 @@ class OrderIntegrationTest : IntegrationTestBase() {
 
             "POST /orders" - {
                 "should return 201 Created for valid order" {
-                    runTest { client ->
+                    runAuthenticatedTest { client ->
                         val newOrder = CreateOrderTestRequest(
                             customerId = null,
                             items = listOf(
@@ -82,9 +83,9 @@ class OrderIntegrationTest : IntegrationTestBase() {
                             setBody(newOrder)
                         }.apply {
                             status.value.shouldBe(201)
-                            val response = body<CreateOrderTestResponse>()
-                            response.orderId.shouldNotBeNull()
-                            response.orderId.shouldBeGreaterThan(0)
+                            val response = body<OrderTestResponse>()
+                            response.id.shouldNotBeNull()
+                            response.id.shouldBeGreaterThan(0)
                             response.totalPrice.shouldNotBeNull()
                             response.totalPrice.shouldBeGreaterThan(0.0)
                         }
@@ -92,7 +93,7 @@ class OrderIntegrationTest : IntegrationTestBase() {
                 }
 
                 "should apply discount base on customer discount percent" {
-                    runTest { client ->
+                    runAuthenticatedTest { client ->
                         // Create a test order for a customer with a discount
                         val customerWithDiscount = 3L // Assuming customer ID 3 has a discount
                         val orderPrice = 10.0 // Base price before discount
@@ -114,8 +115,8 @@ class OrderIntegrationTest : IntegrationTestBase() {
                             setBody(newOrder)
                         }.apply {
                             status.value.shouldBe(201)
-                            val response = body<CreateOrderTestResponse>()
-                            response.orderId.shouldNotBeNull()
+                            val response = body<OrderTestResponse>()
+                            response.id.shouldNotBeNull()
                             response.totalPrice.shouldNotBeNull()
 
                             // Verify that the discount was applied correctly
@@ -131,7 +132,7 @@ class OrderIntegrationTest : IntegrationTestBase() {
                         "empty items" to template.copy(items = emptyList())
                     ).forEach { (testName, newOrder) ->
                         testName {
-                            runTest { client ->
+                            runAuthenticatedTest { client ->
                                 client.post("$baseUrl/orders") {
                                     contentType(ContentType.Application.Json)
                                     setBody(newOrder)
@@ -147,7 +148,7 @@ class OrderIntegrationTest : IntegrationTestBase() {
 
         "PUT /orders/{id}" - {
             "should return 200 OK for valid order update" {
-                runTest { client ->
+                runAuthenticatedTest { client ->
                     val updatedOrder = UpdateOrderTestRequest(
                         status = OrderStatus.COMPLETED
                     )
@@ -163,7 +164,7 @@ class OrderIntegrationTest : IntegrationTestBase() {
             }
 
             "should return 400 Bad Request for invalid order update" {
-                runTest { client ->
+                runAuthenticatedTest { client ->
                     client.put("$baseUrl/orders/x") {
                         contentType(ContentType.Application.Json)
                         setBody(template)
@@ -172,7 +173,7 @@ class OrderIntegrationTest : IntegrationTestBase() {
             }
 
             "should return 404 Not Found for non-existing order" {
-                runTest { client ->
+                runAuthenticatedTest { client ->
                     client.put("$baseUrl/orders/999") {
                         contentType(ContentType.Application.Json)
                         setBody(template)

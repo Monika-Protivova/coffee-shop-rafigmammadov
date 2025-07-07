@@ -20,7 +20,7 @@ class ApplicationContainer : GenericContainer<ApplicationContainer>(
 
         // Copy the application JAR file
         withCopyFileToContainer(
-            MountableFile.forHostPath("../coffee-shop-application/build/libs/basic-application-all.jar"),
+            MountableFile.forHostPath("../coffee-shop-application/build/libs/coffee-shop-application-all.jar"),
             "/app/app.jar"
         )
 

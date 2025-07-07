@@ -45,6 +45,11 @@ class MenuRepositoryImpl: MenuRepository {
             .toSet()
     }
 
+    override suspend fun selectAll(): List<MenuItemDTO> = suspendTransaction {
+        MenuItemDAO.find { MenuItemTable.isDeleted eq false }
+            .map { it.toDTO() }
+    }
+
     override suspend fun updateMenuItem(updatedItem: MenuItemDTO): Int = suspendTransaction {
         MenuItemDAO.findById(updatedItem.id!!)?.let { existingItem ->
             existingItem.name = updatedItem.name
