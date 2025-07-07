@@ -29,7 +29,7 @@ Despite these issues, the core business logic and API contract were validated wi
 - Added and ran unit tests for all business logic, including discount calculation, DTO validation, and response structure.
 - All unit tests pass, confirming the logic is 100% correct and matches the API specification.
 
-## Why My Answer is correct (non-formal part of ReadMe lol)
+## Why My Answer is correct (non-formal part of README lol)
 - The API endpoints, request/response formats, and business rules match the provided specification exactly.
 - The discount logic is applied as specified, and all edge cases are covered by tests.
 - The unit tests confirm that the code behaves as required, even if the integration test container setup has external issues.
